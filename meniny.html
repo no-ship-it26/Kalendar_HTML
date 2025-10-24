@@ -541,7 +541,7 @@
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    display: flex;
+    display: none;
     flex-direction: column;
     justify-content: center;
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -556,6 +556,8 @@
     max-height: 250px;
     opacity: 1;
     padding: 24px;
+    display: flex;
+    margin-top: 20px;
   }
   
   .selected-date {
@@ -909,7 +911,7 @@
   <header>
     <button class="today-btn" onclick="goToToday()">📍 Dnes</button>
     <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-    <div class="header-icon">📅</div>
+    <div class="header-icon">🗓️</div>
     <h1>Meniny</h1>
     <div class="today-info" id="todayDate"></div>
     <div class="today-name" id="todayName"></div>
@@ -1396,6 +1398,5 @@ function onMonthSelect() {
 
 init();
 </script>
-
 </body>
 </html>
