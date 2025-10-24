@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meniny</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  :root {
+    --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-hover: rgba(255, 255, 255, 1);
+    --border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  body.dark-mode {
+    --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    --bg-secondary: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+    --accent: linear-gradient(135deg, #e94560 0%, #533483 100%);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --card-bg: rgba(30, 41, 59, 0.95);
+    --card-hover: rgba(40, 51, 69, 1);
+    --border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+    transition: background 0.5s ease;
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 99, 132, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+    animation: morphGradient 10s ease-in-out infinite alternate;
+  }
+  
+  @keyframes morphGradient {
+    0% { opacity: 0.5; }
+    100% { opacity: 0.8; }
+  }
+  
+  .container {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 24px;
+    box-shadow: 
+      0 32px 64px -12px rgba(0, 0, 0, 0.25),
+      0 0 0 1px var(--border-color) inset;
+    max-width: 1200px;
+    width: 100%;
+    animation: slideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s ease;
+  }
+  
+  @keyframes slideIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(60px) scale(0.9);
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  header {
+    background: var(--bg-secondary);
+    color: white;
+    padding: 32px 24px;
+    text-align: center;
+    border-radius: 24px 24px 0 0;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s ease;
+  }
+  
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+  }
+  
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  h1 {
+    font-size: 2em;
+    margin-bottom: 8px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  
+  .header-icon {
+    font-size: 3em;
+    margin-bottom: 12px;
+    display: inline-block;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .today-info {
+    font-size: 0.95em;
+    opacity: 0.95;
+    margin-top: 12px;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .today-name {
+    font-size: 1.1em;
+    font-weight: 800;
+    margin-top: 16px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .calendar-wrapper {
+    padding: 24px;
+    overflow: visible;
+  }
+  
+  .theme-toggle {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.6em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+  }
+  
+  .theme-toggle:hover {
+    transform: scale(1.15) rotate(15deg);
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .today-btn {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 20px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+  }
+  
+  .today-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  
+  .search-wrapper {
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 200;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 16px 24px 16px 56px;
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    background: var(--card-hover);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    color: var(--text-primary);
+  }
+  
+  .search-wrapper::before {
+    content: '🔍';
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.3em;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .search-input:focus {
+    outline: none;
+    border-color: #4facfe;
+    box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1), 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--card-hover);
+    border-radius: 16px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+    z-index: 100;
+    border: 2px solid var(--border-color);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .search-results.show {
+    max-height: 400px;
+    opacity: 1;
+    overflow-y: auto;
+  }
+  
+  .search-results-header {
+    padding: 12px 20px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.85em;
+    font-weight: 700;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .search-result-item {
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .search-result-item:hover {
+    background: var(--accent);
+    transform: translateX(8px);
+    color: white;
+  }
+  
+  .search-result-icon {
+    font-size: 2em;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  
+  .search-result-item:hover .search-result-icon {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .search-result-content {
+    flex: 1;
+  }
+  
+  .search-result-name {
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1.05em;
+    margin-bottom: 4px;
+  }
+  
+  .search-result-item:hover .search-result-name {
+    color: white;
+  }
+  
+  .search-result-date {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  
+  .search-result-item:hover .search-result-date {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .highlight {
+    background: rgba(255, 215, 0, 0.3);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 900;
+  }
+  
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  
+  .view-toggle {
+    display: flex;
+    gap: 6px;
+    background: var(--card-hover);
+    padding: 6px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid var(--border-color);
+    grid-column: 2;
+  }
+  
+  .view-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 800;
+    color: var(--text-secondary);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+  
+  .view-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+    transform: scale(1.05);
+  }
+  
+  .view-btn:hover:not(.active) {
+    background: rgba(79, 172, 254, 0.1);
+    color: #4facfe;
+    transform: translateY(-2px);
+  }
+  
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    grid-column: 1;
+  }
+  
+  .nav-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 16px rgba(79, 172, 254, 0.3);
+    font-weight: 900;
+  }
+  
+  .nav-btn:hover {
+    transform: scale(1.15);
+    box-shadow: 0 8px 24px rgba(79, 172, 254, 0.5);
+  }
+  
+  .nav-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .month-year {
+    font-size: 1.3em;
+    font-weight: 900;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    flex: 1;
+    text-align: center;
+  }
+  
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .weekday {
+    text-align: center;
+    font-weight: 800;
+    color: var(--text-secondary);
+    font-size: 0.8em;
+    padding: 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  
+  .day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: var(--card-hover);
+    color: var(--text-primary);
+    position: relative;
+    font-size: 1em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 2px solid transparent;
+  }
+  
+  .day:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.12);
+    box-shadow: 0 8px 24px rgba(79, 172, 254, 0.3);
+    z-index: 10;
+  }
+  
+  .day.today {
+    background: var(--bg-secondary);
+    color: white;
+    font-weight: 900;
+    box-shadow: 0 8px 32px rgba(245, 87, 108, 0.5);
+    animation: pulseDay 2.5s infinite;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  @keyframes pulseDay {
+    0%, 100% { 
+      box-shadow: 0 8px 32px rgba(245, 87, 108, 0.5);
+      transform: scale(1);
+    }
+    50% { 
+      box-shadow: 0 12px 48px rgba(245, 87, 108, 0.7);
+      transform: scale(1.05);
+    }
+  }
+  
+  .day.selected {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.08);
+    box-shadow: 0 8px 32px rgba(79, 172, 254, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .day.other-month {
+    opacity: 0.2;
+    cursor: default;
+  }
+  
+  .day.other-month:hover {
+    background: var(--card-hover);
+    transform: none;
+    box-shadow: none;
+    color: var(--text-primary);
+  }
+  
+  .name-display {
+    margin-top: 20px;
+    padding: 24px;
+    background: var(--accent);
+    border-radius: 20px;
+    text-align: center;
+    min-height: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: white;
+    box-shadow: 0 12px 40px rgba(79, 172, 254, 0.4);
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .name-display.active {
+    min-height: 100px;
+    max-height: 250px;
+    opacity: 1;
+    padding: 24px;
+  }
+  
+  .selected-date {
+    font-size: 0.95em;
+    font-weight: 700;
+    margin-bottom: 12px;
+    opacity: 0.9;
+  }
+  
+  .name-text {
+    font-size: 1.6em;
+    font-weight: 900;
+    line-height: 1.4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  
+  .year-view, .list-view {
+    display: none;
+  }
+  
+  .year-view.active, .list-view.active {
+    display: block;
+  }
+  
+  .year-header, .list-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  
+  .year-title, .list-title {
+    font-size: 2em;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+  }
+  
+  .list-title {
+    font-size: 1.6em;
+  }
+  
+  .year-nav, .list-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .year-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  
+  .mini-month {
+    background: var(--card-hover);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid var(--border-color);
+  }
+  
+  .mini-month:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(79, 172, 254, 0.3);
+    border-color: #4facfe;
+  }
+  
+  .mini-month-header {
+    text-align: center;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: -0.5px;
+  }
+  
+  .mini-month-header:hover {
+    color: #4facfe;
+    transform: scale(1.08);
+  }
+  
+  .mini-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  
+  .mini-weekday {
+    text-align: center;
+    font-size: 0.7em;
+    font-weight: 800;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    text-transform: uppercase;
+  }
+  
+  .mini-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  
+  .mini-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+  
+  .mini-day:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.15);
+    z-index: 10;
+  }
+  
+  .mini-day.today {
+    background: var(--bg-secondary) !important;
+    color: white !important;
+    font-weight: 900;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4) !important;
+  }
+  
+  .mini-day.other-month {
+    opacity: 0.2;
+    cursor: default;
+  }
+  
+  .mini-day.other-month:hover {
+    background: var(--card-bg);
+    transform: none;
+    color: var(--text-primary);
+  }
+  
+  .month-view-container.hidden {
+    display: none;
+  }
+  
+  .month-selector {
+    padding: 12px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    background: var(--card-hover);
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  .month-selector:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79, 172, 254, 0.3);
+  }
+  
+  .month-selector:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.2);
+  }
+  
+  .list-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .list-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: var(--card-hover);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+  
+  .list-item:hover {
+    transform: translateX(12px) scale(1.01);
+    box-shadow: 0 8px 32px rgba(79, 172, 254, 0.3);
+    border-color: #4facfe;
+  }
+  
+  .list-item.today {
+    background: var(--bg-secondary);
+    color: white;
+    box-shadow: 0 8px 32px rgba(245, 87, 108, 0.4);
+  }
+  
+  .list-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+    margin-right: 20px;
+    padding-right: 20px;
+    border-right: 3px solid var(--border-color);
+  }
+  
+  .list-item.today .list-date {
+    border-right-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .list-date-number {
+    font-size: 2em;
+    font-weight: 900;
+    color: var(--text-primary);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  
+  .list-item.today .list-date-number {
+    color: white;
+  }
+  
+  .list-day-name {
+    font-size: 0.8em;
+    font-weight: 800;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .list-item.today .list-day-name {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .list-name-content {
+    flex: 1;
+  }
+  
+  .list-name-text {
+    font-size: 1.1em;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+  
+  .list-item.today .list-name-text {
+    color: white;
+  }
+  
+  .list-month-divider {
+    text-align: center;
+    padding: 16px 0 8px;
+    font-size: 1.2em;
+    font-weight: 900;
+    background: var(--accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: sticky;
+    top: 0;
+    background-color: var(--card-bg);
+    backdrop-filter: blur(20px);
+    z-index: 5;
+    margin: 0 0 10px 0;
+    border-radius: 16px;
+    letter-spacing: -0.5px;
+  }
+  
+  @media (max-width: 768px) {
+    body {
+      padding: 12px;
+    }
+    
+    .container {
+      border-radius: 20px;
+    }
+    
+    header {
+      padding: 24px 16px;
+      border-radius: 20px 20px 0 0;
+    }
+    
+    h1 {
+      font-size: 1.5em;
+    }
+    
+    .today-btn {
+      font-size: 0.8em;
+      padding: 10px 16px;
+    }
+    
+    .calendar-wrapper {
+      padding: 20px;
+    }
+    
+    .controls {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    .view-toggle {
+      grid-column: 1;
+      justify-content: center;
+    }
+    
+    .nav-controls {
+      grid-column: 1;
+    }
+    
+    .year-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    
+    .list-item {
+      flex-direction: column;
+      text-align: center;
+      padding: 16px;
+    }
+    
+    .list-date {
+      border-right: none;
+      border-bottom: 3px solid var(--border-color);
+      padding-right: 0;
+      padding-bottom: 12px;
+      margin-right: 0;
+      margin-bottom: 12px;
+      width: 100%;
+    }
+    
+    .list-item.today .list-date {
+      border-bottom-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <button class="today-btn" onclick="goToToday()">📍 Dnes</button>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <div class="header-icon">📅</div>
+    <h1>Meniny</h1>
+    <div class="today-info" id="todayDate"></div>
+    <div class="today-name" id="todayName"></div>
+  </header>
+  
+  <div class="calendar-wrapper">
+    <div class="search-wrapper">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Hľadať meno..." 
+        id="searchInput"
+        autocomplete="off"
+      >
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    
+    <div class="controls">
+      <div class="nav-controls">
+        <button class="nav-btn" onclick="changeMonth(-1)" id="prevBtn">←</button>
+        <div class="month-year" id="monthYear"></div>
+        <button class="nav-btn" onclick="changeMonth(1)" id="nextBtn">→</button>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="switchView('month')">Mesiac</button>
+        <button class="view-btn" onclick="switchView('year')">Rok</button>
+        <button class="view-btn" onclick="switchView('list')">Zoznam</button>
+      </div>
+    </div>
+    
+    <div class="month-view-container" id="monthViewContainer">
+      <div class="weekdays">
+        <div class="weekday">Po</div>
+        <div class="weekday">Ut</div>
+        <div class="weekday">St</div>
+        <div class="weekday">Št</div>
+        <div class="weekday">Pi</div>
+        <div class="weekday">So</div>
+        <div class="weekday">Ne</div>
+      </div>
+      
+      <div class="days-grid" id="daysGrid"></div>
+      
+      <div class="name-display" id="nameDisplay">
+        <div class="selected-date" id="selectedDate"></div>
+        <div class="name-text" id="nameText"></div>
+      </div>
+    </div>
+    
+    <div class="year-view" id="yearView">
+      <div class="year-header">
+        <div class="year-nav">
+          <button class="nav-btn" onclick="changeYear(-1)">←</button>
+          <div class="year-title" id="yearTitle"></div>
+          <button class="nav-btn" onclick="changeYear(1)">→</button>
+        </div>
+      </div>
+      <div class="year-grid" id="yearGrid"></div>
+    </div>
+    
+    <div class="list-view" id="listView">
+      <div class="list-header">
+        <div class="list-nav">
+          <button class="nav-btn" onclick="changeListMonth(-1)">←</button>
+          <select class="month-selector" id="monthSelector" onchange="onMonthSelect()">
+            <option value="0">Január</option>
+            <option value="1">Február</option>
+            <option value="2">Marec</option>
+            <option value="3">Apríl</option>
+            <option value="4">Máj</option>
+            <option value="5">Jún</option>
+            <option value="6">Júl</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">Október</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+            <option value="all">Celý rok</option>
+          </select>
+          <button class="nav-btn" onclick="changeListMonth(1)">→</button>
+        </div>
+        <div class="list-title" id="listTitle"></div>
+      </div>
+      <div class="list-container" id="listContainer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const meniny = {
+"01-01":"Nový rok, Deň vzniku SR (Sviatok)","01-02":"Alexandra","01-03":"Daniela","01-04":"Drahoslav","01-05":"Andrea","01-06":"Antónia, Zjavenie Pána (Traja králi) (Sviatok)","01-07":"Bohuslava","01-08":"Severín","01-09":"Alexej","01-10":"Dáša",
+"01-11":"Malvína","01-12":"Ernest","01-13":"Rastislav","01-14":"Radovan","01-15":"Dobroslav","01-16":"Kristína","01-17":"Nataša","01-18":"Bohdana","01-19":"Drahomíra","01-20":"Dalibor",
+"01-21":"Vincent","01-22":"Zora","01-23":"Miloš","01-24":"Timotej","01-25":"Gejza","01-26":"Tamara","01-27":"Bohuš","01-28":"Alfonz","01-29":"Gašpar","01-30":"Ema","01-31":"Emil",
+"02-01":"Tatiana","02-02":"Erika","02-03":"Blažej","02-04":"Veronika","02-05":"Agáta","02-06":"Dorota","02-07":"Vanda","02-08":"Zoja","02-09":"Zdenko","02-10":"Gabriela",
+"02-11":"Dezider","02-12":"Perla","02-13":"Arpád","02-14":"Valentín","02-15":"Pravoslav","02-16":"Ida","02-17":"Miloslava","02-18":"Jaromír","02-19":"Vlasta","02-20":"Lívia",
+"02-21":"Eleonóra","02-22":"Etela","02-23":"Roman","02-24":"Matej","02-25":"Frederik","02-26":"Viktor","02-27":"Alexander","02-28":"Zlatica","02-29":"Radomír",
+"03-01":"Albín","03-02":"Anežka","03-03":"Bohumil","03-04":"Kazimír","03-05":"Fridrich","03-06":"Radoslav","03-07":"Tomáš","03-08":"Alan, Medzinárodný deň žien","03-09":"Františka","03-10":"Branislav",
+"03-11":"Angela","03-12":"Gregor","03-13":"Vlastimil","03-14":"Matilda","03-15":"Svetlana","03-16":"Boleslav","03-17":"Ľubica","03-18":"Eduard","03-19":"Jozef","03-20":"Víťazoslav",
+"03-21":"Blahoslav","03-22":"Beňadik","03-23":"Adrián","03-24":"Gabriel","03-25":"Marián","03-26":"Emanuel","03-27":"Alena","03-28":"Soňa","03-29":"Miroslav","03-30":"Vieroslava","03-31":"Benjamín",
+"04-01":"Hugo","04-02":"Zita","04-03":"Richard","04-04":"Izidor","04-05":"Miroslava","04-06":"Irena","04-07":"Zoltán","04-08":"Albert","04-09":"Milena","04-10":"Igor",
+"04-11":"Július","04-12":"Estera","04-13":"Aleš","04-14":"Justína","04-15":"Fedor","04-16":"Dana","04-17":"Rudolf","04-18":"Valér","04-19":"Jela","04-20":"Marcel",
+"04-21":"Ervín","04-22":"Slavomír","04-23":"Vojtech","04-24":"Juraj","04-25":"Marek","04-26":"Jaroslava","04-27":"Jaroslav","04-28":"Jarmila","04-29":"Lea","04-30":"Anastázia",
+"05-01":"Sviatok práce (Sviatok)","05-02":"Žigmund","05-03":"Galina","05-04":"Florián","05-05":"Lesana","05-06":"Hermína","05-07":"Monika","05-08":"Ivana, Deň víťazstva nad fašizmom (Sviatok)","05-09":"Roland","05-10":"Viktória",
+"05-11":"Blažena","05-12":"Pankrác","05-13":"Servác","05-14":"Bonifác","05-15":"Žofia","05-16":"Svetozár","05-17":"Gizela","05-18":"Viola","05-19":"Gertrúda","05-20":"Bernard",
+"05-21":"Zina","05-22":"Júlia","05-23":"Želmíra","05-24":"Ela","05-25":"Urban","05-26":"Dušan","05-27":"Iveta","05-28":"Viliam","05-29":"Maxim","05-30":"Ferdinand","05-31":"Petrana",
+"06-01":"Žaneta","06-02":"Xénia","06-03":"Karolína","06-04":"Lenka","06-05":"Laura","06-06":"Norbert","06-07":"Róbert","06-08":"Medard","06-09":"Stanislava","06-10":"Margita",
+"06-11":"Dobroslava","06-12":"Zlatko","06-13":"Anton","06-14":"Vasil","06-15":"Vít","06-16":"Blanka","06-17":"Adolf","06-18":"Vratislav","06-19":"Alfréd","06-20":"Valéria",
+"06-21":"Alojz","06-22":"Paulína","06-23":"Sidónia","06-24":"Ján","06-25":"Tadeáš","06-26":"Adriána","06-27":"Ladislav","06-28":"Beáta","06-29":"Peter, Pavol","06-30":"Melánia",
+"07-01":"Diana","07-02":"Berta","07-03":"Miloslav","07-04":"Prokop","07-05":"Cyril a Metod (Sviatok)","07-06":"Patrik","07-07":"Oliver","07-08":"Ivan","07-09":"Lujza","07-10":"Amália",
+"07-11":"Milota","07-12":"Nina","07-13":"Margita","07-14":"Kamil","07-15":"Henrich","07-16":"Drahomír","07-17":"Bohuslav","07-18":"Kamila","07-19":"Dušana","07-20":"Iľja",
+"07-21":"Viera","07-22":"Magdaléna","07-23":"Oľga","07-24":"Vladimír","07-25":"Jakub","07-26":"Anna","07-27":"Božena","07-28":"Krištof","07-29":"Marta","07-30":"Libuša","07-31":"Ignác",
+"08-01":"Božidara","08-02":"Gustáv","08-03":"Jerguš","08-04":"Dominik","08-05":"Hortenzia","08-06":"Jozefína","08-07":"Štefánia","08-08":"Oskar","08-09":"Ľubomíra","08-10":"Vavrinec",
+"08-11":"Zuzana","08-12":"Darina","08-13":"Ľubomír","08-14":"Mojmír","08-15":"Nanebovzatie Panny Márie (Sviatok)","08-16":"Leonard","08-17":"Milica","08-18":"Elena","08-19":"Lýdia","08-20":"Anabela",
+"08-21":"Jana","08-22":"Tichomír","08-23":"Filomena","08-24":"Bartolomej","08-25":"Ľudovít","08-26":"Samuel","08-27":"Silvia","08-28":"Augustín","08-29":"Nikola, Beáta","08-30":"Ružena","08-31":"Nora",
+"09-01":"Danka, Deň Ústavy SR (Sviatok)","09-02":"Linda","09-03":"Belo","09-04":"Rozália","09-05":"Regína","09-06":"Alica","09-07":"Marianna","09-08":"Miriama","09-09":"Martina","09-10":"Oleg",
+"09-11":"Bystrík","09-12":"Mária","09-13":"Ctibor","09-14":"Ľudomil","09-15":"Jolana, Sedembolestná Panna Mária (Sviatok)","09-16":"Ľudmila","09-17":"Olympia","09-18":"Eugénia","09-19":"Konštantín","09-20":"Ľuboslav",
+"09-21":"Matúš","09-22":"Móric","09-23":"Zdenka","09-24":"Ľuboš","09-25":"Vladislav","09-26":"Edita","09-27":"Cyprián","09-28":"Václav","09-29":"Michal","09-30":"Jarolím",
+"10-01":"Arnold","10-02":"Levoslav","10-03":"Stela","10-04":"František","10-05":"Viera","10-06":"Natália","10-07":"Eliška","10-08":"Brigita","10-09":"Dionýz","10-10":"Slavomíra",
+"10-11":"Valentína","10-12":"Maximilián","10-13":"Koloman","10-14":"Boris","10-15":"Terézia","10-16":"Vladimíra","10-17":"Hedviga","10-18":"Lukáš","10-19":"Kristián","10-20":"Vendelín",
+"10-21":"Uršuľa","10-22":"Sergej","10-23":"Alojzia","10-24":"Kvetoslava","10-25":"Aurel","10-26":"Demeter","10-27":"Sabína","10-28":"Dobromila, Deň vzniku ČSR (Sviatok)","10-29":"Klára","10-30":"Šimon","10-31":"Aurélia",
+"11-01":"Denis, Denisa, Sviatok všetkých svätých (Sviatok)","11-02":"Pamiatka zosnulých","11-03":"Hubert","11-04":"Karol","11-05":"Imrich","11-06":"Renáta","11-07":"René","11-08":"Bohumír","11-09":"Teodor","11-10":"Tibor",
+"11-11":"Martin","11-12":"Svätopluk","11-13":"Stanislav","11-14":"Irma","11-15":"Leopold","11-16":"Agnesa","11-17":"Klaudia, Deň boja za slobodu a demokraciu (Sviatok)","11-18":"Eugen","11-19":"Alžbeta","11-20":"Félix",
+"11-21":"Elvíra","11-22":"Cecília","11-23":"Klement","11-24":"Emília","11-25":"Katarína","11-26":"Kornel","11-27":"Milan","11-28":"Henrieta","11-29":"Vratko","11-30":"Ondrej",
+"12-01":"Edmund","12-02":"Bibiána","12-03":"Oldrich","12-04":"Barbora","12-05":"Oto","12-06":"Mikuláš","12-07":"Ambróz","12-08":"Marína","12-09":"Izabela","12-10":"Radúz",
+"12-11":"Hilda","12-12":"Otília","12-13":"Lucia","12-14":"Branislava","12-15":"Ivica","12-16":"Albína","12-17":"Kornélia","12-18":"Sláva","12-19":"Judita","12-20":"Dagmara",
+"12-21":"Bohdan","12-22":"Adela","12-23":"Nadežda","12-24":"Adam, Eva (Štedrý deň) (Sviatok)","12-25":"1. sviatok vianočný (Sviatok)","12-26":"Štefan (2. sviatok vianočný) (Sviatok), Mano","12-27":"Filoména","12-28":"Ivana","12-29":"Milada","12-30":"Dávid","12-31":"Silvester"
+};
+
+const monthNames = ["Január","Február","Marec","Apríl","Máj","Jún","Júl","August","September","Október","November","December"];
+const dayNames = ["Nedeľa","Pondelok","Utorok","Streda","Štvrtok","Piatok","Sobota"];
+
+let currentDate = new Date();
+let currentMonth = currentDate.getMonth();
+let currentYear = currentDate.getFullYear();
+let selectedDay = null;
+let currentView = 'month';
+let listMonthFilter = 'all';
+
+function init() {
+  updateTodayInfo();
+  renderCalendar();
+  setupSearch();
+  updateViewButtons();
+  loadThemePreference();
+}
+
+function updateTodayInfo() {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString("sk-SK", {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const key = formatDateKey(today);
+  const name = meniny[key] || "Žiadne meniny";
+  document.getElementById("todayDate").textContent = dateStr;
+  document.getElementById("todayName").textContent = name;
+}
+
+function formatDateKey(date) {
+  return `${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+
+function renderCalendar() {
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  const prevLastDay = new Date(currentYear, currentMonth, 0);
+  document.getElementById("monthYear").textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  const daysGrid = document.getElementById("daysGrid");
+  daysGrid.innerHTML = "";
+  const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  for (let i = startDay - 1; i >= 0; i--) {
+    daysGrid.appendChild(createDayElement(prevLastDay.getDate() - i, true));
+  }
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    daysGrid.appendChild(createDayElement(day, false));
+  }
+  const remainingCells = 42 - daysGrid.children.length;
+  for (let day = 1; day <= remainingCells; day++) {
+    daysGrid.appendChild(createDayElement(day, true));
+  }
+}
+
+function createDayElement(day, otherMonth) {
+  const div = document.createElement("div");
+  div.className = "day";
+  div.textContent = day;
+  if (otherMonth) {
+    div.classList.add("other-month");
+    return div;
+  }
+  const today = new Date();
+  if (day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+    div.classList.add("today");
+  }
+  if (selectedDay === day) div.classList.add("selected");
+  div.onclick = () => selectDay(day);
+  return div;
+}
+
+function selectDay(day) {
+  selectedDay = day;
+  const key = `${String(currentMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+  const name = meniny[key] || "Žiadne meniny";
+  const date = new Date(currentYear, currentMonth, day);
+  const dateStr = `${dayNames[date.getDay()]}, ${day}. ${monthNames[currentMonth]} ${currentYear}`;
+  const display = document.getElementById("nameDisplay");
+  display.classList.add("active");
+  document.getElementById("selectedDate").textContent = dateStr;
+  document.getElementById("nameText").textContent = name;
+  renderCalendar();
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  else if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  selectedDay = null;
+  renderCalendar();
+}
+
+function goToToday() {
+  const today = new Date();
+  currentMonth = today.getMonth();
+  currentYear = today.getFullYear();
+  if (currentView !== 'month') switchView('month');
+  renderCalendar();
+  selectDay(today.getDate());
+}
+
+function toggleTheme() {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+}
+
+function loadThemePreference() {
+  const theme = localStorage.getItem('theme');
+  if (theme === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+}
+
+function highlightText(text, query) {
+  if (!query) return text;
+  const regex = new RegExp(`(${query})`, 'gi');
+  return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+function setupSearch() {
+  const input = document.getElementById("searchInput");
+  const results = document.getElementById("searchResults");
+  input.addEventListener("input", (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (query.length < 2) { results.classList.remove("show"); return; }
+    const matches = [];
+    for (const [date, names] of Object.entries(meniny)) {
+      if (names.toLowerCase().includes(query)) matches.push({date, names});
+      if (matches.length >= 15) break;
+    }
+    if (matches.length > 0) {
+      const header = `<div class="search-results-header">Nájdených ${matches.length} výsledkov</div>`;
+      const items = matches.map(m => {
+        const [month, day] = m.date.split("-");
+        const dateStr = `${parseInt(day)}. ${monthNames[parseInt(month)-1]}`;
+        const highlightedName = highlightText(m.names, query);
+        return `<div class="search-result-item" onclick="goToDate('${m.date}')">
+          <div class="search-result-icon">🎂</div>
+          <div class="search-result-content">
+            <div class="search-result-name">${highlightedName}</div>
+            <div class="search-result-date">${dateStr}</div>
+          </div>
+        </div>`;
+      }).join("");
+      results.innerHTML = header + items;
+      results.classList.add("show");
+    } else results.classList.remove("show");
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-wrapper")) results.classList.remove("show");
+  });
+}
+
+window.goToDate = function(dateKey) {
+  const [month, day] = dateKey.split("-");
+  currentMonth = parseInt(month) - 1;
+  currentYear = currentDate.getFullYear();
+  if (currentView !== 'month') switchView('month');
+  renderCalendar();
+  selectDay(parseInt(day));
+  document.getElementById("searchResults").classList.remove("show");
+  document.getElementById("searchInput").value = "";
+}
+
+function switchView(view) {
+  currentView = view;
+  const monthView = document.getElementById('monthViewContainer');
+  const yearView = document.getElementById('yearView');
+  const listView = document.getElementById('listView');
+  const monthYear = document.getElementById('monthYear');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  monthView.classList.add('hidden');
+  yearView.classList.remove('active');
+  listView.classList.remove('active');
+  if (view === 'month') {
+    monthView.classList.remove('hidden');
+    monthYear.style.display = 'block';
+    prevBtn.style.display = 'flex';
+    nextBtn.style.display = 'flex';
+    renderCalendar();
+  } else if (view === 'year') {
+    yearView.classList.add('active');
+    monthYear.style.display = 'none';
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    renderYearView();
+  } else if (view === 'list') {
+    listView.classList.add('active');
+    monthYear.style.display = 'none';
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    renderListView();
+  }
+  updateViewButtons();
+}
+
+function updateViewButtons() {
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    const text = btn.textContent.toLowerCase();
+    let btnView = 'month';
+    if (text === 'rok') btnView = 'year';
+    if (text === 'zoznam') btnView = 'list';
+    if (btnView === currentView) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+}
+
+function renderYearView() {
+  const yearGrid = document.getElementById('yearGrid');
+  const yearTitle = document.getElementById('yearTitle');
+  yearTitle.textContent = currentYear;
+  yearGrid.innerHTML = '';
+  for (let month = 0; month < 12; month++) {
+    yearGrid.appendChild(createMiniMonth(month, currentYear));
+  }
+}
+
+function createMiniMonth(month, year) {
+  const container = document.createElement('div');
+  container.className = 'mini-month';
+  const header = document.createElement('div');
+  header.className = 'mini-month-header';
+  header.textContent = monthNames[month];
+  header.onclick = () => { currentMonth = month; switchView('month'); };
+  container.appendChild(header);
+  const weekdays = document.createElement('div');
+  weekdays.className = 'mini-weekdays';
+  ['P','U','S','Š','P','S','N'].forEach(day => {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'mini-weekday';
+    dayEl.textContent = day;
+    weekdays.appendChild(dayEl);
+  });
+  container.appendChild(weekdays);
+  const daysGrid = document.createElement('div');
+  daysGrid.className = 'mini-days-grid';
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const prevLastDay = new Date(year, month, 0);
+  const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  for (let i = startDay - 1; i >= 0; i--) {
+    daysGrid.appendChild(createMiniDay(prevLastDay.getDate() - i, true));
+  }
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    daysGrid.appendChild(createMiniDay(day, false, month, year));
+  }
+  const remainingCells = 42 - daysGrid.children.length;
+  for (let day = 1; day <= remainingCells; day++) {
+    daysGrid.appendChild(createMiniDay(day, true));
+  }
+  container.appendChild(daysGrid);
+  return container;
+}
+
+function createMiniDay(day, otherMonth, month, year) {
+  const div = document.createElement('div');
+  div.className = 'mini-day';
+  div.textContent = day;
+  if (otherMonth) { div.classList.add('other-month'); return div; }
+  const today = new Date();
+  if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+    div.classList.add('today');
+  }
+  div.onclick = () => { currentMonth = month; currentYear = year; switchView('month'); selectDay(day); };
+  return div;
+}
+
+function changeYear(delta) {
+  currentYear += delta;
+  renderYearView();
+}
+
+function renderListView() {
+  const listContainer = document.getElementById('listContainer');
+  const listTitle = document.getElementById('listTitle');
+  const monthSelector = document.getElementById('monthSelector');
+  monthSelector.value = listMonthFilter;
+  if (listMonthFilter === 'all') {
+    listTitle.textContent = `${currentYear}`;
+    renderFullYearList(listContainer);
+  } else {
+    const monthIndex = parseInt(listMonthFilter);
+    listTitle.textContent = `${monthNames[monthIndex]} ${currentYear}`;
+    renderMonthList(listContainer, monthIndex);
+  }
+}
+
+function renderMonthList(container, month) {
+  container.innerHTML = '';
+  const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+  const today = new Date();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(currentYear, month, day);
+    const key = `${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const name = meniny[key] || "Žiadne meniny";
+    const dayName = dayNames[date.getDay()];
+    const isToday = day === today.getDate() && month === today.getMonth() && currentYear === today.getFullYear();
+    const item = document.createElement('div');
+    item.className = 'list-item' + (isToday ? ' today' : '');
+    item.onclick = () => { currentMonth = month; switchView('month'); selectDay(day); };
+    item.innerHTML = `<div class="list-date">
+      <div class="list-date-number">${day}</div>
+      <div class="list-day-name">${dayName}</div>
+    </div>
+    <div class="list-name-content">
+      <div class="list-name-text">${name}</div>
+    </div>`;
+    container.appendChild(item);
+  }
+}
+
+function renderFullYearList(container) {
+  container.innerHTML = '';
+  const today = new Date();
+  for (let month = 0; month < 12; month++) {
+    const divider = document.createElement('div');
+    divider.className = 'list-month-divider';
+    divider.textContent = monthNames[month];
+    container.appendChild(divider);
+    const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentYear, month, day);
+      const key = `${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const name = meniny[key] || "Žiadne meniny";
+      const dayName = dayNames[date.getDay()];
+      const isToday = day === today.getDate() && month === today.getMonth() && currentYear === today.getFullYear();
+      const item = document.createElement('div');
+      item.className = 'list-item' + (isToday ? ' today' : '');
+      item.onclick = () => { currentMonth = month; switchView('month'); selectDay(day); };
+      item.innerHTML = `<div class="list-date">
+        <div class="list-date-number">${day}</div>
+        <div class="list-day-name">${dayName}</div>
+      </div>
+      <div class="list-name-content">
+        <div class="list-name-text">${name}</div>
+      </div>`;
+      container.appendChild(item);
+    }
+  }
+}
+
+function changeListMonth(delta) {
+  if (listMonthFilter === 'all') {
+    currentYear += delta;
+  } else {
+    const monthIndex = parseInt(listMonthFilter);
+    currentMonth = monthIndex;
+    changeMonth(delta);
+  }
+  renderListView();
+}
+
+function onMonthSelect() {
+  const selector = document.getElementById('monthSelector');
+  listMonthFilter = selector.value;
+  renderListView();
+}
+
+init();
+</script>
+
+</body>
+</html>
